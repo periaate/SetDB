@@ -1,12 +1,12 @@
 # SetDB
 Database based on concepts of Set Theory.
 
-Flags
--r to start remote server
--s to start as shell
--c to run command directly
--rs to run remote shell
-
-Commands
-list [search terms]       Junction search from sets
-show name                 Prints filename
+Flags<br/>
+-r to start remote server<br/>
+-s to start as shell<br/>
+-c to run command directly<br/>
+-rs to run remote shell<br/>
+<br/>
+Commands<br/>
+list [search terms]       Junction search from sets<br/>
+show name                 Prints filename<br/>
