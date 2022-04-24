@@ -5,23 +5,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
+	"net/rpc"
 	"os"
 	"setdb/setmap"
 	"strings"
 )
 
-// Temporary, to be changed
-const fp = "../storage"
+// Fp Temporary, to be changed
+var Fp = "./storage"
 
 type (
 	element struct {
 		Fn   string   `json:"fn"`
-		Fp   string   `json:"fp"`
+		Fp   string   `json:"Fp"`
 		Tags []string `json:"tags"`
 	}
 	// Data is a wrapper for Setmap to allow for distinction between data structure and api layer
 	Data struct {
-		setmap.Setmap
+		Sets setmap.Setmap
+		Els  setmap.Setmap
 	}
 )
 
@@ -37,13 +41,14 @@ func Junction(sets []*setmap.Setmap) *setmap.Setmap {
 
 	//Recurse
 	//First index set, junction second, do until no indexes, always matching against return
-	s := setmap.Newmap(1)
+	s := new(setmap.Setmap)
+	s.Init(1)
 
 	for _, v := range Junction(sets[1:]).Sets {
 		if v == nil {
 			continue
 		}
-		if _, f := sets[0].Get(v.Name); f {
+		if it := sets[0].Get(v.Name); it != nil {
 			s.New(v)
 		}
 	}
@@ -62,13 +67,14 @@ func Disjunction(sets []*setmap.Setmap) *setmap.Setmap {
 
 	//Recurse
 	//First index set, junction second, do until no indexes, always matching against return
-	s := setmap.Newmap(1)
+	s := new(setmap.Setmap)
+	s.Init(1)
 
 	for _, v := range Junction(sets[1:]).Sets {
 		if v == nil {
 			continue
 		}
-		if _, f := sets[0].Get(v.Name); !f {
+		if it := sets[0].Get(v.Name); it == nil {
 			s.New(v)
 		}
 	}
@@ -80,14 +86,14 @@ func Disjunction(sets []*setmap.Setmap) *setmap.Setmap {
 
 // Generate generates sets from files
 func (d *Data) Generate() {
-	files, err := os.ReadDir(fp)
+	files, err := os.ReadDir(Fp)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, file := range files {
 		el := new(element)
-		b, err := os.ReadFile(fmt.Sprintf("%s/%s", fp, file.Name()))
+		b, err := os.ReadFile(fmt.Sprintf("%s/%s", Fp, file.Name()))
 		if err != nil {
 			panic(err)
 		}
@@ -96,23 +102,29 @@ func (d *Data) Generate() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		for _, t := range el.Tags {
-			t = strings.Replace(t, " ", "", -1)
 
-			s, f := d.Get(t)
-			if s == nil || !f {
-				tagset := setmap.Newmap(1)
-				tagset.Name = t
-				elset := setmap.Newmap(1)
-				elset.Fp = el.Fp
-				elset.Name = el.Fn
-				tagset.New(elset)
-				d.New(tagset)
+		if item := d.Els.Get(el.Fn); item == nil {
+			newEl := &setmap.Setmap{Fp: el.Fp, Name: el.Fn}
+			newEl.Init(uint64(len(el.Tags) * 2))
+			d.Els.New(newEl)
+		}
+
+		elset := d.Els.Get(el.Fn)
+
+		for _, tagName := range el.Tags {
+			tagName = strings.Replace(tagName, " ", "", -1)
+
+			set := d.Sets.Get(tagName)
+			if set == nil {
+				newSet := new(setmap.Setmap)
+				newSet.Init(10)
+				newSet.Name = tagName
+				newSet.New(elset)
+				d.Sets.New(newSet)
+				elset.New(newSet)
 			} else {
-				elset := setmap.Newmap(1)
-				elset.Fp = el.Fp
-				elset.Name = el.Fn
-				s.New(elset)
+				elset.New(set)
+				set.New(elset)
 			}
 		}
 	}
@@ -120,5 +132,67 @@ func (d *Data) Generate() {
 
 func (e *element) save() {
 	file, _ := json.MarshalIndent(e, "", " ")
-	_ = ioutil.WriteFile(fmt.Sprintf("%s/%s", fp, fpToHash(e.Fp)), file, 0644)
+	_ = ioutil.WriteFile(fmt.Sprintf("%s/%s", Fp, fpToHash(e.Fp)), file, 0644)
+}
+
+func (d *Data) list(args ...string) []*setmap.Setmap {
+
+	sms := []*setmap.Setmap{}
+
+	for _, v := range args {
+		sm := d.Sets.Get(v)
+		if sm != nil {
+			sms = append(sms, sm)
+		}
+	}
+	return sms
+}
+
+func (d *Data) show(args ...string) []string {
+	item := strings.Join(args, " ")
+	fmt.Println(item)
+	sm := d.Els.Get(item)
+	if sm == nil {
+		return []string{}
+	}
+	res := []string{sm.Name, sm.Fp}
+	return res
+}
+
+// Command handler for shells, apis
+func (d *Data) Command(args []string, sar *[]string) error {
+	fmt.Println(args)
+	switch args[0] {
+	case "list":
+		if len(args[1:]) == 0 {
+			*sar = d.Sets.Stringify(true)
+			return nil
+		}
+
+		sms := Junction(d.list(args[1:]...))
+		res := sms.Stringify(true)
+		*sar = res
+
+		return nil
+	case "show":
+		*sar = d.show(args[1:]...)
+	}
+	return nil
+}
+
+// t1 t2    t1 and t2
+// t1, t2   t1 or t2
+// t1 !t2   t1 not t2
+// show - get name, fp of set
+// list - get all children
+
+// Serve rpc at port
+func Serve(d *Data) {
+	rpc.Register(d)
+	rpc.HandleHTTP()
+	l, e := net.Listen("tcp", "localhost:1234")
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	http.Serve(l, nil)
 }

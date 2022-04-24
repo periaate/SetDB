@@ -59,8 +59,8 @@ func fpToHash(fp string) string {
 func GetArray(d *Data, names []string) []*setmap.Setmap {
 	sar := []*setmap.Setmap{}
 	for _, name := range names {
-		res, found := d.Get(name)
-		if found {
+		res := d.Sets.Get(name)
+		if res != nil {
 			sar = append(sar, res)
 		}
 	}
