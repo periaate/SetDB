@@ -1,12 +1,33 @@
+
 # SetDB
+
 Database based on concepts of Set Theory.
 
-Flags<br/>
--r to start remote server<br/>
--s to start as shell<br/>
--c to run command directly<br/>
--rs to run remote shell<br/>
-<br/>
-Commands<br/>
-list [search terms]       Junction search from sets<br/>
-show name                 Prints filename<br/>
+ [![size](https://img.shields.io/github/repo-size/periaate/SetDB?color=red&label=SIZE)](https://img.shields.io/github/repo-size/periaate/SetDB?color=red&label=SIZE)
+
+## Quick Links
+
+- [Commands](#Commmands)
+- [Flags](#Flags)
+- [Maintainers](#Maintainers)
+
+## Commmands
+
+- **`list [search terms]`**: 
+Junction search from sets
+
+- **`show name`**: 
+Prints the filename
+
+## Flags
+
+| Flag              | Description                     | 
+| ----------------- | ------------------------------- | 
+| -r | to start remote server |
+| -s | to start as a shell |
+| -c | to run commands directly |
+| -c | to run a remote shell |
+
+## Maintainers
+
+- [periaate](https://github.com/periaate) - leinad#0002
