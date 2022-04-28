@@ -60,7 +60,5 @@ func GenerateRSAKey(path string, bits int) (*rsa.PrivateKey, error) {
 		return privKey, err
 	}
 
-	file.Close()
-
-	return privKey, nil
+	return privKey, file.Close()
 }
