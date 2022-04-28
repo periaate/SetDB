@@ -14,10 +14,10 @@ Database based on concepts of Set Theory.
 ## Commmands
 
 - **`list [search terms]`**: 
-Junction search from sets
+Conjunction on sets found with given terms
 
 - **`show name`**: 
-Prints the filename
+Searches for an element with given name, prints information regarding it if found
 
 ## Flags
 
@@ -26,7 +26,8 @@ Prints the filename
 | -r | to start remote server |
 | -s | to start as a shell |
 | -c | to run commands directly |
-| -c | to run a remote shell |
+| -rs | to run a remote shell |
+| -configure | to generate a configuration file |
 
 ## Maintainers
 

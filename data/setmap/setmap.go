@@ -21,7 +21,8 @@ type Setmap struct {
 	writeLock sync.Mutex
 }
 
-// hash is a modified DJB2 that runs roughly 50% faster for SHA256, while giving identical results.
+// hash is a modified DJB2 string hashing algorithm that runs
+// 50% faster for SHA256, while giving identical results to the unmodified version.
 func (sm *Setmap) hash(Name string) uint64 {
 	var (
 		buf bytes.Buffer
@@ -93,12 +94,12 @@ func (sm *Setmap) runcap(b bool) {
 		sm.Capacity.Current--
 	}
 	if (float64(sm.Capacity.Current) / float64(sm.Capacity.Max)) > 0.65 {
-		sm.writeLock.Lock()
 		sm.resize()
 	}
 }
 
 func (sm *Setmap) resize() {
+	sm.writeLock.Lock()
 	newcapacity := uint64(float64(sm.Capacity.Max+1) * increase)
 	// TODO: verbose flag
 	// fmt.Printf("capacity: %v.Currentcapacity: %v newcapacity: %v\n", sm.Capacity.Max, sm.Capacity.Current, newcapacity)
