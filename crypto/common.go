@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -58,6 +59,28 @@ func GenerateRSAKey(path string, bits int) (*rsa.PrivateKey, error) {
 	_, err = file.Write(pemdata)
 	if err != nil {
 		return privKey, err
+	}
+
+	return privKey, file.Close()
+}
+
+// This function tries to load a private key storage at the path variable
+func LoadRSAKey(path string) (*rsa.PrivateKey, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := new(bytes.Buffer)
+	_, err = buffer.ReadFrom(file)
+	if err != nil {
+		return nil, err
+	}
+	block, _ := pem.Decode(buffer.Bytes())
+
+	privKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
 	}
 
 	return privKey, file.Close()
