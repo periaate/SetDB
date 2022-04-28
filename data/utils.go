@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
-	"setdb/setmap"
+	"setdb/data/setmap"
 	"strings"
 )
 
@@ -41,7 +41,6 @@ func FoldersAsTags(descs []string, p string) {
 		} else {
 			foundEl.Tags = append(foundEl.Tags, descs...)
 		}
-
 	}
 
 	for _, el := range els {

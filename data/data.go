@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
-	"net/http"
-	"net/rpc"
 	"os"
-	"setdb/setmap"
+	"setdb/data/setmap"
 	"strings"
 )
 
@@ -29,8 +26,8 @@ type (
 	}
 )
 
-// Junction between two sets
-func Junction(sets []*setmap.Setmap) *setmap.Setmap {
+// Conjunction between two sets
+func Conjunction(sets []*setmap.Setmap) *setmap.Setmap {
 	if len(sets) == 0 {
 		return nil
 	}
@@ -44,7 +41,7 @@ func Junction(sets []*setmap.Setmap) *setmap.Setmap {
 	s := new(setmap.Setmap)
 	s.Init(1)
 
-	for _, v := range Junction(sets[1:]).Sets {
+	for _, v := range Conjunction(sets[1:]).Sets {
 		if v == nil {
 			continue
 		}
@@ -70,7 +67,7 @@ func Disjunction(sets []*setmap.Setmap) *setmap.Setmap {
 	s := new(setmap.Setmap)
 	s.Init(1)
 
-	for _, v := range Junction(sets[1:]).Sets {
+	for _, v := range Conjunction(sets[1:]).Sets {
 		if v == nil {
 			continue
 		}
@@ -136,7 +133,6 @@ func (e *element) save() {
 }
 
 func (d *Data) list(args ...string) []*setmap.Setmap {
-
 	sms := []*setmap.Setmap{}
 
 	for _, v := range args {
@@ -161,7 +157,6 @@ func (d *Data) show(args ...string) []string {
 
 // Command handler for shells, apis
 func (d *Data) Command(args []string, sar *[]string) error {
-	fmt.Println(args)
 	switch args[0] {
 	case "list":
 		if len(args[1:]) == 0 {
@@ -169,7 +164,7 @@ func (d *Data) Command(args []string, sar *[]string) error {
 			return nil
 		}
 
-		sms := Junction(d.list(args[1:]...))
+		sms := Conjunction(d.list(args[1:]...))
 		res := sms.Stringify(true)
 		*sar = res
 
@@ -185,14 +180,3 @@ func (d *Data) Command(args []string, sar *[]string) error {
 // t1 !t2   t1 not t2
 // show - get name, fp of set
 // list - get all children
-
-// Serve rpc at port
-func Serve(d *Data) {
-	rpc.Register(d)
-	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", "localhost:1234")
-	if e != nil {
-		log.Fatal("listen error:", e)
-	}
-	http.Serve(l, nil)
-}
