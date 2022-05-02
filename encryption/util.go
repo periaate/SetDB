@@ -18,7 +18,7 @@ func (e Error) Error() string {
 
 const (
 	ErrInvalidRSABits = Error("Invalid number of bits for RSA private key generation")
-	ErrInvalidPath    = Error("Invalid path for private key")
+	ErrInvalidRSAPath = Error("Invalid path for private key")
 )
 
 // This function generates a new private RSA key provided its path to save on disk
@@ -26,7 +26,7 @@ const (
 // the bits are optional, defaulting to 4096 bits
 func GenerateRSAKey(path string, bits int) (*rsa.PrivateKey, error) {
 	if path == "" {
-		return nil, ErrInvalidPath
+		return nil, ErrInvalidRSAPath
 	}
 
 	if bits < 0 {

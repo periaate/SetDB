@@ -21,7 +21,7 @@ const ErrInvalidNonceSize = Error("invalid nonce size attempting to encrypt/decr
 const ErrCipherDataTooShort = Error("invalid cipher data length (too short)")
 
 type AESConn struct {
-	conn  net.Conn
+	net.Conn
 	ctx   context.Context
 	block cipher.Block
 }
@@ -33,15 +33,15 @@ func NewAESConn(ctx context.Context, conn net.Conn, key []byte) (*AESConn, error
 	}
 
 	return &AESConn{
+		Conn:  conn,
 		ctx:   ctx,
-		conn:  conn,
 		block: block,
 	}, nil
 }
 
 func (a *AESConn) Read(b []byte) (int, error) {
 	nread := make([]byte, 4)
-	n, err := a.conn.Read(nread)
+	n, err := a.Conn.Read(nread)
 	if err != nil {
 		return n, err
 	}
@@ -49,7 +49,7 @@ func (a *AESConn) Read(b []byte) (int, error) {
 	ciphertext := []byte{}
 	for t := uint32(0); t < size; t++ {
 		tmp := make([]byte, size-t)
-		n, err := a.conn.Read(tmp)
+		n, err := a.Conn.Read(tmp)
 		if err != nil && err != io.EOF {
 			return n, err
 		}
@@ -85,14 +85,14 @@ func (a *AESConn) Write(b []byte) (int, error) {
 
 	tmp := make([]byte, 4)
 	binary.BigEndian.PutUint32(tmp, uint32(len(ciphertext)))
-	_, err := a.conn.Write(tmp)
+	_, err := a.Conn.Write(tmp)
 	if err != nil {
 		return -1, err
 	}
 
 	t := 0
 	for t < len(ciphertext) {
-		n, err := a.conn.Write(ciphertext[t:])
+		n, err := a.Conn.Write(ciphertext[t:])
 		if err != nil {
 			return n, err
 		}

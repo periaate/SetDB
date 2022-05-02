@@ -19,17 +19,17 @@ func (e localError) Error() string {
 
 const ErrDifferentHashes = localError("hashes were different/inconsistent while testing")
 
-type fakeConn struct {
+type FakeConn struct {
 	net.Conn
 	ch chan []byte
 }
 
-func (f *fakeConn) Read(b []byte) (int, error) {
+func (f *FakeConn) Read(b []byte) (int, error) {
 	data := <-f.ch
 	return io.ReadFull(bytes.NewBuffer(data), b)
 }
 
-func (f *fakeConn) Write(b []byte) (int, error) {
+func (f *FakeConn) Write(b []byte) (int, error) {
 	f.ch <- b
 
 	return len(b), nil
@@ -41,7 +41,7 @@ func TestAES(t *testing.T) {
 
 	// The channel must have enough bytes so it won't deadlock
 	// It's only for the test tho
-	f := fakeConn{
+	f := FakeConn{
 		ch: make(chan []byte, 5000),
 	}
 
